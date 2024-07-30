@@ -175,11 +175,21 @@ int main(int argc, char* argv[]) {
 		// 이더넷 헤더는 고정 크기 14바이트
 		struct libnet_ipv4_hdr* ip_header = (struct libnet_ipv4_hdr*)(packet + 14);
 
+		// TCP 패킷인지 확인
+		if (ip_header->ip_p != 6) { 
+			printf("UDP 패킷입니다. 생략합니다.\n");
+			continue;
+		}
+		else
+			printf("TCP 패킷입니다. 정보를 출력합니다.\n");
+
+
 		// IPv4 헤더의 길이는 가변일 수 있기 때문에 다음과 같이 계산해야함
 		int ip_header_length = ip_header->ip_hl * 4;
 		// Ip해더의 길이가 4비트로 저장되는데 이 값은 32비트(4바이트) 단위로 헤더 길이를 나타냄 때문에 4를 곱해주면 헤더의 길이가 나옴
 		// 이유는 4비트에 32비트 값을 채워넣어야 되기 때문에 이를 위해서 4를 나눈 것임
-		// TCP 헤더의 시작 위치를 계산 (이더넷 헤더 + IPv4 헤더)
+		
+		// TCP 헤더의 시작 위치를 계산 (이더넷 헤더 길이 14바이트 + IPv4 헤더 길이)
 		struct libnet_tcp_hdr* tcp_header = (struct libnet_tcp_hdr*)(packet + 14 + ip_header_length);
 
 		// TCP 헤더의 길이는 가변일 수 있기 때문에 다음과 같이 계산해야함
@@ -187,10 +197,12 @@ int main(int argc, char* argv[]) {
 		// TCP 헤더 길이가 4비트로 저장되는데 이 값은 32비트(4바이트) 단위로 헤더 길이를 나타냄 때문에 4를 곱해주면 헤더의 길이가 나옴
 		// 이유는 4비트에 32비트 값을 채워넣어야 되기 때문에 이를 위해서 4를 나눈 것임
 
-		// 데이터 부분
+		// 데이터 부분의 시작 위치를 계산 (이더넷 헤더 길이 14바이트 + IPv4 헤더 + TCP 헤더)
 		const u_int8_t* Data = packet + 14 + ip_header_length + tcp_header_length;
 
-		int Data_length = header->caplen - (Data - packet); //header->caplen은 현재 캡처된 패킷의 길이를 바이트 단위로 저장
+		int Data_length = header->caplen - (Data - packet); 
+		//header->caplen은 실제로 캡처된 패킷의 길이를 바이트 단위로 저장.
+		//header->caplen은 현재 캡처된 패킷의 길이를 바이트 단위로 저장
 		//즉 현재 식의 의미는 전체 패킷 길이에서 packet 시작에서 data까지의 길이를 빼주면 data의 길이이다.
 
 		printf("%u bytes captured\n", header->caplen);
